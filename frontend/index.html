@@ -1,1 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sinais Pro</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div class="login-screen" id="login-screen">
+        <h2>Sinais Pro 🔐</h2>
+        <input type="password" id="password-input" placeholder="Digite a senha..." />
+        <button id="login-button">Entrar</button>
+    </div>
 
+    <!-- Conteúdo Principal do App (começa escondido ) -->
+    <div id="app" style="display: none;">
+        <header>
+            <h1>Sinais Pro</h1>
+            <div class="timeframe-selector">
+                <button data-timeframe="1h">1H</button>
+                <button data-timeframe="4h">4H</button>
+                <button data-timeframe="1d" class="active">1D</button>
+                <button data-timeframe="1w">1W</button>
+            </div>
+        </header>
+        <main id="signals-container"></main>
+    </div>
+
+    <!-- Biblioteca de Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <!-- Nosso JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
