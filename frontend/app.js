@@ -2,14 +2,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginButton = document.getElementById('login-button');
     const passwordInput = document.getElementById('password-input');
 
-    loginButton.addEventListener('click', checkPassword);
-    passwordInput.addEventListener('keyup', (event) => {
-        if (event.key === 'Enter') checkPassword();
-    });
+    // Verifica se os elementos existem antes de adicionar eventos
+    if (loginButton) {
+        loginButton.addEventListener('click', checkPassword);
+    }
+    if (passwordInput) {
+        passwordInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') checkPassword();
+        });
+    }
 });
 
 function checkPassword() {
-    const correctPassword = "ope1001"; // Sua nova senha
+    const correctPassword = "ope1001"; // Sua senha
     const enteredPassword = document.getElementById('password-input').value;
 
     if (enteredPassword === correctPassword) {
@@ -47,8 +52,9 @@ const coinIcons = {
 };
 
 async function fetchAndDisplaySignals(timeframe ) {
-    // IMPORTANTE: Substitua pela URL do seu novo backend na Railway
-    const apiUrl = `https://SEU-NOVO-BACKEND-URL.up.railway.app/signals?timeframe=${timeframe}`;
+    // --- LINHA ALTERADA COM A SUA URL ---
+    const apiUrl = `https://sinais-production.up.railway.app/signals?timeframe=${timeframe}`;
+    
     const container = document.getElementById('signals-container' );
     container.innerHTML = `<p>Analisando timeframe ${timeframe}...</p>`;
 
