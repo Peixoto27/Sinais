@@ -401,4 +401,3 @@ function requestNotificationPermission() {
         Notification.requestPermission();
     }
 }
-
