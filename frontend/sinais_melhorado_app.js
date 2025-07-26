@@ -43,6 +43,7 @@ function checkPassword() {
     }
 }
 
+
 // Inicialização da aplicação
 function initializeApp() {
     setupEventListeners();
