@@ -2,38 +2,29 @@
 let allSignals = [];
 let activeAlerts = JSON.parse(localStorage.getItem('sinaisProAlerts') || '[]');
 let activeTimeframe = '1d';
+let currentSignalsOnScreen = new Map();
 
 // Ícones das moedas
 const coinIcons = {
-    'BTC/USDT': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25669/svg/color/btc.svg',
-    'ETH/USDT': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25669/svg/color/eth.svg',
-    'XRP/USDT': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25669/svg/color/xrp.svg',
-    'SOL/USDT': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25669/svg/color/sol.svg',
-    'ADA/USDT': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25669/svg/color/ada.svg',
-    'default': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25669/svg/color/generic.svg'
+    'BTC/USDT': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@latest/svg/color/btc.svg',
+    'ETH/USDT': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@latest/svg/color/eth.svg',
+    'XRP/USDT': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@latest/svg/color/xrp.svg',
+    'SOL/USDT': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@latest/svg/color/sol.svg',
+    'ADA/USDT': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@latest/svg/color/ada.svg',
+    'default': 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@latest/svg/color/generic.svg'
 };
 
-// Inicialização quando a página carrega
+// Login
 document.addEventListener('DOMContentLoaded', () => {
-    const loginButton = document.getElementById('login-button');
-    const passwordInput = document.getElementById('password-input');
-
-    if (loginButton) {
-        loginButton.addEventListener('click', checkPassword);
-    }
-    if (passwordInput) {
-        passwordInput.addEventListener('keyup', (event) => {
-            if (event.key === 'Enter') checkPassword();
-        });
-    }
+    document.getElementById('login-button').addEventListener('click', checkPassword);
+    document.getElementById('password-input').addEventListener('keyup', e => {
+        if (e.key === 'Enter') checkPassword();
+    });
 });
 
-// Função de login
 function checkPassword() {
-    const correctPassword = "ope1001";
-    const enteredPassword = document.getElementById('password-input').value;
-
-    if (enteredPassword === correctPassword) {
+    const senha = document.getElementById('password-input').value;
+    if (senha === "ope1001") {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         initializeApp();
@@ -43,362 +34,288 @@ function checkPassword() {
     }
 }
 
-// Inicialização da aplicação
+// Inicialização
 function initializeApp() {
     setupEventListeners();
     loadAlertsFromStorage();
     fetchAndDisplaySignals(activeTimeframe);
-    
-    // Atualização automática a cada 30 segundos
-    setInterval(() => {
-        fetchAndDisplaySignals(activeTimeframe);
-    }, 30000);
+    setInterval(() => fetchAndDisplaySignals(activeTimeframe), 30000);
 }
 
-// Configuração dos event listeners
+// Eventos
 function setupEventListeners() {
-    // Timeframe buttons
-    const timeframeButtons = document.querySelectorAll('.timeframe-selector button');
-    timeframeButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            timeframeButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            activeTimeframe = button.dataset.timeframe;
+    document.querySelectorAll('.timeframe-selector button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.timeframe-selector button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeTimeframe = btn.dataset.timeframe;
+            currentSignalsOnScreen.clear();
+            document.getElementById('signals-container').innerHTML = '';
             fetchAndDisplaySignals(activeTimeframe);
         });
     });
 
-    // Filter
-    const signalFilter = document.getElementById('signal-filter');
-    if (signalFilter) {
-        signalFilter.addEventListener('change', applyFilters);
-    }
-
-    // Buttons
-    const refreshBtn = document.getElementById('refresh-btn');
-    const alertsBtn = document.getElementById('alerts-btn');
-    
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => fetchAndDisplaySignals(activeTimeframe));
-    }
-    if (alertsBtn) {
-        alertsBtn.addEventListener('click', openAlertsModal);
-    }
-
-    // Modal close buttons
-    document.querySelectorAll('.close').forEach(closeBtn => {
-        closeBtn.addEventListener('click', closeModals);
-    });
-
-    // Add alert button
-    const addAlertBtn = document.getElementById('add-alert');
-    if (addAlertBtn) {
-        addAlertBtn.addEventListener('click', addAlert);
-    }
-
-    // Close modal when clicking outside
-    window.addEventListener('click', (event) => {
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
+    document.getElementById('signal-filter').addEventListener('change', applyFilters);
+    document.getElementById('refresh-btn').addEventListener('click', () => fetchAndDisplaySignals(activeTimeframe));
+    document.getElementById('alerts-btn').addEventListener('click', openAlertsModal);
+    document.querySelectorAll('.close').forEach(btn => btn.addEventListener('click', closeModals));
+    document.getElementById('add-alert').addEventListener('click', addAlert);
+    window.addEventListener('click', e => {
+        document.querySelectorAll('.modal').forEach(modal => {
+            if (e.target === modal) modal.style.display = 'none';
         });
     });
 }
 
-// Buscar e exibir sinais
+// Fetch e render
 async function fetchAndDisplaySignals(timeframe) {
-    const apiUrl = `https://sinais-production.up.railway.app/signals?timeframe=${timeframe}`;
+    const url = `https://sinais-production.up.railway.app/signals?timeframe=${timeframe}`;
     const container = document.getElementById('signals-container');
-    
-    // Mostrar loading
-    container.innerHTML = `
-        <div class="loading">
-            <i class="fas fa-spinner"></i>
-            Analisando timeframe ${timeframe}...
-        </div>
-    `;
+
+    if (currentSignalsOnScreen.size === 0) {
+        container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> Analisando timeframe ${timeframe}...</div>`;
+    }
 
     try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-            throw new Error(`Erro na API: ${response.statusText}`);
-        }
-        
-        const signals = await response.json();
+        const res = await fetch(url);
+        const signals = await res.json();
         allSignals = signals;
-        
-        displaySignals(signals);
+        updateSignalsSmooth(signals);
         updateLastUpdatedTimestamp();
         checkAlerts(signals);
-        
-    } catch (error) {
-        console.error("Erro ao buscar sinais:", error);
-        container.innerHTML = `
-            <div class="error">
-                <i class="fas fa-exclamation-triangle"></i>
-                Erro ao carregar sinais: ${error.message}
-            </div>
-        `;
+    } catch (e) {
+        container.innerHTML = `<div class="error"><i class="fas fa-exclamation-triangle"></i> Erro ao carregar sinais</div>`;
     }
 }
 
-// Exibir sinais na interface
-function displaySignals(signals) {
+// Atualização suave
+function updateSignalsSmooth(newSignals) {
     const container = document.getElementById('signals-container');
-    container.innerHTML = '';
-
-    if (signals.length === 0) {
-        container.innerHTML = `
-            <div class="error">
-                <i class="fas fa-info-circle"></i>
-                Nenhum sinal encontrado para este timeframe.
-            </div>
-        `;
+    if (newSignals.length === 0) {
+        container.innerHTML = `<div class="error"><i class="fas fa-info-circle"></i> Nenhum sinal encontrado.</div>`;
+        currentSignalsOnScreen.clear();
         return;
     }
 
-    signals.forEach(signal => {
-        if (signal.signal === 'ERROR') return;
+    document.querySelector('.loading')?.remove();
+    const newMap = new Map();
+    newSignals.forEach(signal => {
+        if (signal.signal !== 'ERROR') newMap.set(signal.pair, signal);
+    });
 
-        const card = createSignalCard(signal);
-        container.appendChild(card);
+    newMap.forEach((newSignal, pair) => {
+        const card = document.querySelector(`[data-pair="${pair}"]`);
+        if (card) {
+            const old = currentSignalsOnScreen.get(pair);
+            if (hasSignalChanged(old, newSignal)) updateExistingCard(card, newSignal);
+        } else {
+            const newCard = createSignalCard(newSignal);
+            container.appendChild(newCard);
+        }
+        currentSignalsOnScreen.set(pair, newSignal);
+    });
+
+    currentSignalsOnScreen.forEach((_, pair) => {
+        if (!newMap.has(pair)) {
+            document.querySelector(`[data-pair="${pair}"]`)?.remove();
+            currentSignalsOnScreen.delete(pair);
+        }
     });
 }
 
-// Criar card de sinal
+function hasSignalChanged(a, b) {
+    return !a || a.price !== b.price || a.signal !== b.signal || a.confidence !== b.confidence || JSON.stringify(a.indicators) !== JSON.stringify(b.indicators);
+}
+
+// Card com alvo
 function createSignalCard(signal) {
     const card = document.createElement('div');
     card.className = 'signal-card';
+    card.setAttribute('data-pair', signal.pair);
 
-    const signalType = signal.signal.split(' ')[0]; // BUY, SELL, HOLD
-    const iconUrl = coinIcons[signal.pair] || coinIcons['default'];
-    
-    // Determinar ícone do sinal
-    let signalIcon = 'fa-clock';
-    if (signalType === 'BUY') signalIcon = 'fa-arrow-trend-up';
-    else if (signalType === 'SELL') signalIcon = 'fa-arrow-trend-down';
+    let tipo = signal.signal.toUpperCase();
+    if (tipo.includes("BUY")) tipo = "BUY";
+    else if (tipo.includes("SELL")) tipo = "SELL";
+    else tipo = "HOLD";
 
-    // Determinar cor da confiança
-    const confidenceNum = parseInt(signal.confidence.split('/')[0]);
-    let confidenceColor = '#666666';
-    if (confidenceNum >= 7) confidenceColor = '#34c759';
-    else if (confidenceNum >= 5) confidenceColor = '#ff9500';
-    else confidenceColor = '#ff3b30';
+    const icon = tipo === "BUY" ? "fa-arrow-trend-up" : tipo === "SELL" ? "fa-arrow-trend-down" : "fa-clock";
+    const iconUrl = coinIcons[signal.pair] || coinIcons.default;
+
+    const confNum = parseInt(signal.confidence.split('/')[0]);
+    const confColor = confNum >= 7 ? "#34c759" : confNum >= 5 ? "#ff9500" : "#ff3b30";
+    const alvo = calcularAlvo(signal);
 
     card.innerHTML = `
         <div class="card-header">
             <div class="coin-info">
-                <img src="${iconUrl}" alt="${signal.pair}" class="coin-icon">
+                <img src="${iconUrl}" class="coin-icon" />
                 <div class="coin-details">
                     <h3>${signal.pair}</h3>
                     <div class="coin-price">$${signal.price}</div>
+                    <div class="coin-target">🎯 Alvo: $${alvo.valor} (${alvo.percentual}%)</div>
                 </div>
             </div>
-            <div class="confidence-badge" style="color: ${confidenceColor}; border-color: ${confidenceColor};">
-                ${signal.confidence}
-            </div>
+            <div class="confidence-badge" style="color:${confColor}; border-color:${confColor};">${signal.confidence}</div>
         </div>
-
-        <div class="signal-display signal-${signalType}">
-            <div class="signal-text signal-${signalType}">
-                <i class="fas ${signalIcon}"></i>
-                ${signal.signal}
-            </div>
-            <div class="signal-description">
-                ${getSignalDescription(signal.signal, confidenceNum)}
-            </div>
+        <div class="signal-display signal-${tipo}">
+            <div class="signal-text signal-${tipo}"><i class="fas ${icon}"></i> ${signal.signal}</div>
+            <div class="signal-description">${getSignalDescription(signal.signal, confNum)}</div>
         </div>
-
         <div class="indicators-section">
             <div class="indicators-grid">
-                <div class="indicator-item">
-                    <span class="indicator-label">RSI</span>
-                    <span class="indicator-value">${signal.indicators.rsi}</span>
-                </div>
-                <div class="indicator-item">
-                    <span class="indicator-label">MACD</span>
-                    <span class="indicator-value">${signal.indicators.macd}</span>
-                </div>
-                <div class="indicator-item">
-                    <span class="indicator-label">B. Sup</span>
-                    <span class="indicator-value">${signal.indicators.bollinger_upper}</span>
-                </div>
-                <div class="indicator-item">
-                    <span class="indicator-label">B. Inf</span>
-                    <span class="indicator-value">${signal.indicators.bollinger_lower}</span>
-                </div>
+                <div class="indicator-item"><span class="indicator-label">RSI</span><span class="indicator-value">${signal.indicators.rsi}</span></div>
+                <div class="indicator-item"><span class="indicator-label">MACD</span><span class="indicator-value">${signal.indicators.macd}</span></div>
+                <div class="indicator-item"><span class="indicator-label">B. Sup</span><span class="indicator-value">${signal.indicators.bollinger_upper}</span></div>
+                <div class="indicator-item"><span class="indicator-label">B. Inf</span><span class="indicator-value">${signal.indicators.bollinger_lower}</span></div>
             </div>
         </div>
     `;
-
     return card;
 }
 
-// Obter descrição do sinal
-function getSignalDescription(signalText, confidence) {
-    if (signalText.includes('BUY')) {
-        if (confidence >= 7) return 'Sinal forte de compra confirmado por múltiplos indicadores';
-        return 'Tendência de alta detectada, aguardando confirmação';
-    } else if (signalText.includes('SELL')) {
-        if (confidence >= 7) return 'Sinal forte de venda confirmado por múltiplos indicadores';
-        return 'Tendência de baixa detectada, aguardando confirmação';
-    } else {
-        return 'Mercado em consolidação, aguardando movimento definido';
-    }
+// Atualização parcial do card
+function updateExistingCard(el, s) {
+    el.querySelector('.coin-price').textContent = `$${s.price}`;
+    const confEl = el.querySelector('.confidence-badge');
+    const confNum = parseInt(s.confidence.split('/')[0]);
+    const confColor = confNum >= 7 ? "#34c759" : confNum >= 5 ? "#ff9500" : "#ff3b30";
+    confEl.textContent = s.confidence;
+    confEl.style.color = confColor;
+    confEl.style.borderColor = confColor;
+
+    const tipo = s.signal.toUpperCase().includes("BUY") ? "BUY" : s.signal.toUpperCase().includes("SELL") ? "SELL" : "HOLD";
+    const icon = tipo === "BUY" ? "fa-arrow-trend-up" : tipo === "SELL" ? "fa-arrow-trend-down" : "fa-clock";
+    const alvo = calcularAlvo(s);
+
+    el.querySelector('.signal-display').className = `signal-display signal-${tipo}`;
+    el.querySelector('.signal-text').className = `signal-text signal-${tipo}`;
+    el.querySelector('.signal-text').innerHTML = `<i class="fas ${icon}"></i> ${s.signal}`;
+    el.querySelector('.signal-description').textContent = getSignalDescription(s.signal, confNum);
+    el.querySelector('.coin-target').textContent = `🎯 Alvo: $${alvo.valor} (${alvo.percentual}%)`;
+
+    const indicators = el.querySelectorAll('.indicator-value');
+    indicators[0].textContent = s.indicators.rsi;
+    indicators[1].textContent = s.indicators.macd;
+    indicators[2].textContent = s.indicators.bollinger_upper;
+    indicators[3].textContent = s.indicators.bollinger_lower;
 }
 
-// Aplicar filtros
+// Lógica alvo por confiança
+function calcularAlvo(signal) {
+    const preco = signal.price;
+    const conf = parseInt(signal.confidence.split('/')[0]);
+    let perc = conf >= 8 ? 6 : conf >= 6 ? 4 : conf >= 4 ? 2 : 1;
+    let valor = preco;
+
+    if (signal.signal.toUpperCase().includes("BUY")) {
+        valor = preco * (1 + perc / 100);
+    } else if (signal.signal.toUpperCase().includes("SELL")) {
+        valor = preco * (1 - perc / 100);
+    }
+
+    return { valor: valor.toFixed(4), percentual: perc };
+}
+
+function getSignalDescription(txt, conf) {
+    if (txt.includes("BUY")) return conf >= 7 ? "Sinal forte de compra" : "Tendência de alta, aguarde confirmação";
+    if (txt.includes("SELL")) return conf >= 7 ? "Sinal forte de venda" : "Tendência de baixa, aguarde confirmação";
+    return "Mercado em consolidação";
+}
+
 function applyFilters() {
-    const signalFilter = document.getElementById('signal-filter').value;
-    
-    let filteredSignals = allSignals;
-    
-    if (signalFilter !== 'all') {
-        filteredSignals = allSignals.filter(signal => 
-            signal.signal.includes(signalFilter)
-        );
-    }
-    
-    displaySignals(filteredSignals);
+    const filtro = document.getElementById('signal-filter').value;
+    const sinais = filtro === 'all' ? allSignals : allSignals.filter(s => s.signal.includes(filtro));
+    const container = document.getElementById('signals-container');
+    container.innerHTML = '';
+    currentSignalsOnScreen.clear();
+    sinais.forEach(signal => {
+        const card = createSignalCard(signal);
+        container.appendChild(card);
+        currentSignalsOnScreen.set(signal.pair, signal);
+    });
 }
 
-// Abrir modal de alertas
 function openAlertsModal() {
     document.getElementById('alerts-modal').style.display = 'block';
     displayActiveAlerts();
 }
 
-// Fechar modais
 function closeModals() {
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.style.display = 'none';
-    });
+    document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
 }
 
-// Adicionar alerta
 function addAlert() {
     const pair = document.getElementById('alert-pair').value;
     const price = parseFloat(document.getElementById('alert-price').value);
     const condition = document.getElementById('alert-condition').value;
 
-    if (!pair || !price) {
-        alert('Por favor, preencha todos os campos.');
-        return;
-    }
+    if (!pair || !price) return alert('Preencha todos os campos.');
 
-    const alert = {
-        id: Date.now(),
-        pair: pair,
-        price: price,
-        condition: condition,
-        created: new Date().toLocaleString()
-    };
-
-    activeAlerts.push(alert);
+    activeAlerts.push({ id: Date.now(), pair, price, condition, created: new Date().toLocaleString() });
     saveAlertsToStorage();
     displayActiveAlerts();
-
-    // Limpar formulário
     document.getElementById('alert-pair').value = '';
     document.getElementById('alert-price').value = '';
 }
 
-// Remover alerta
-function removeAlert(alertId) {
-    activeAlerts = activeAlerts.filter(alert => alert.id !== alertId);
+function removeAlert(id) {
+    activeAlerts = activeAlerts.filter(a => a.id !== id);
     saveAlertsToStorage();
     displayActiveAlerts();
 }
 
-// Exibir alertas ativos
 function displayActiveAlerts() {
     const container = document.getElementById('alerts-list');
-    
     if (activeAlerts.length === 0) {
-        container.innerHTML = '<p style="color: #666; text-align: center;">Nenhum alerta ativo</p>';
+        container.innerHTML = '<p style="text-align:center;color:#777">Nenhum alerta ativo</p>';
         return;
     }
-
-    container.innerHTML = activeAlerts.map(alert => `
+    container.innerHTML = activeAlerts.map(a => `
         <div class="alert-item">
             <div>
-                <strong>${alert.pair}</strong> ${alert.condition === 'above' ? 'acima de' : 'abaixo de'} $${alert.price}
-                <br><small style="color: #666;">Criado em: ${alert.created}</small>
+                <strong>${a.pair}</strong> ${a.condition === 'above' ? 'acima de' : 'abaixo de'} $${a.price}
+                <br><small>${a.created}</small>
             </div>
-            <button onclick="removeAlert(${alert.id})">Remover</button>
-        </div>
-    `).join('');
+            <button onclick="removeAlert(${a.id})">Remover</button>
+        </div>`).join('');
 }
 
-// Verificar alertas
 function checkAlerts(signals) {
     activeAlerts.forEach(alert => {
         const signal = signals.find(s => s.pair === alert.pair);
         if (!signal) return;
 
-        const currentPrice = signal.price;
-        let triggered = false;
-
-        if (alert.condition === 'above' && currentPrice >= alert.price) {
-            triggered = true;
-        } else if (alert.condition === 'below' && currentPrice <= alert.price) {
-            triggered = true;
-        }
-
-        if (triggered) {
-            showNotification(`Alerta: ${alert.pair} ${alert.condition === 'above' ? 'acima de' : 'abaixo de'} $${alert.price}!`);
+        const preco = signal.price;
+        if ((alert.condition === 'above' && preco >= alert.price) || (alert.condition === 'below' && preco <= alert.price)) {
+            showNotification(`Alerta: ${alert.pair} atingiu $${preco}`);
             removeAlert(alert.id);
         }
     });
 }
 
-// Mostrar notificação
-function showNotification(message) {
-    // Verificar se o navegador suporta notificações
-    if ('Notification' in window) {
-        if (Notification.permission === 'granted') {
-            new Notification('Sinais Pro', { body: message });
-        } else if (Notification.permission !== 'denied') {
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    new Notification('Sinais Pro', { body: message });
-                }
+function showNotification(msg) {
+    if ("Notification" in window) {
+        if (Notification.permission === "granted") {
+            new Notification("Sinais Pro", { body: msg });
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then(p => {
+                if (p === "granted") new Notification("Sinais Pro", { body: msg });
             });
         }
     }
-    
-    // Fallback: alert
-    alert(message);
+    alert(msg);
 }
 
-// Salvar alertas no localStorage
 function saveAlertsToStorage() {
     localStorage.setItem('sinaisProAlerts', JSON.stringify(activeAlerts));
 }
 
-// Carregar alertas do localStorage
 function loadAlertsFromStorage() {
-    const stored = localStorage.getItem('sinaisProAlerts');
-    if (stored) {
-        activeAlerts = JSON.parse(stored);
-    }
+    const saved = localStorage.getItem('sinaisProAlerts');
+    if (saved) activeAlerts = JSON.parse(saved);
 }
 
-// Atualizar timestamp da última atualização
 function updateLastUpdatedTimestamp() {
-    const timestamp = document.getElementById('last-updated-timestamp');
-    if (timestamp) {
-        const now = new Date();
-        timestamp.textContent = `Última atualização: ${now.toLocaleTimeString()}`;
-    }
+    const el = document.getElementById('last-updated-timestamp');
+    if (el) el.textContent = `Última atualização: ${new Date().toLocaleTimeString()}`;
 }
-
-// Solicitar permissão para notificações quando a app inicializa
-function requestNotificationPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-    }
-}
-
