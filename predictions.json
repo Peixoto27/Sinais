@@ -1,0 +1,50 @@
+[
+  {
+    "symbol": "ETHUSDT",
+    "signal": "VENDA",
+    "confidence": 0.5454763174057007,
+    "probability_buy": 0.4545237123966217,
+    "probability_sell": 0.5454763174057007,
+    "timestamp": "2025-08-22T23:06:36.136944"
+  },
+  {
+    "symbol": "PEPEUSDT",
+    "signal": "COMPRA",
+    "confidence": 0.5425536632537842,
+    "probability_buy": 0.5425536632537842,
+    "probability_sell": 0.4574463367462158,
+    "timestamp": "2025-08-22T23:06:36.143770"
+  },
+  {
+    "symbol": "BONKUSDT",
+    "signal": "COMPRA",
+    "confidence": 0.6238297820091248,
+    "probability_buy": 0.6238297820091248,
+    "probability_sell": 0.37617021799087524,
+    "timestamp": "2025-08-22T23:06:36.150429"
+  },
+  {
+    "symbol": "FLOKIUSDT",
+    "signal": "COMPRA",
+    "confidence": 0.5285874605178833,
+    "probability_buy": 0.5285874605178833,
+    "probability_sell": 0.4714125394821167,
+    "timestamp": "2025-08-22T23:06:36.157098"
+  },
+  {
+    "symbol": "DOGEUSDT",
+    "signal": "COMPRA",
+    "confidence": 0.9628419280052185,
+    "probability_buy": 0.9628419280052185,
+    "probability_sell": 0.037158071994781494,
+    "timestamp": "2025-08-22T23:06:36.163297"
+  },
+  {
+    "symbol": "BTCUSDT",
+    "signal": "VENDA",
+    "confidence": 0.9903847575187683,
+    "probability_buy": 0.009615226648747921,
+    "probability_sell": 0.9903847575187683,
+    "timestamp": "2025-08-22T23:06:36.169798"
+  }
+]

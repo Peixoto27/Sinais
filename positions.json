@@ -1,0 +1,59 @@
+{
+  "open": [
+    {
+      "symbol": "ETHUSDT",
+      "entry": 4829.23,
+      "tp": 4969.11,
+      "sl": 4759.29,
+      "created_at": "2025-08-23 03:04:35 UTC",
+      "last_sent_at": "2025-08-23 03:04:35 UTC",
+      "status": "open"
+    },
+    {
+      "symbol": "PEPEUSDT",
+      "entry": 1.158e-05,
+      "tp": 1.1953333333333333e-05,
+      "sl": 1.1393333333333333e-05,
+      "created_at": "2025-08-23 03:04:35 UTC",
+      "last_sent_at": "2025-08-23 03:04:35 UTC",
+      "status": "open"
+    },
+    {
+      "symbol": "BONKUSDT",
+      "entry": 2.381e-05,
+      "tp": 2.4552666666666666e-05,
+      "sl": 2.3438666666666666e-05,
+      "created_at": "2025-08-23 03:04:35 UTC",
+      "last_sent_at": "2025-08-23 03:04:35 UTC",
+      "status": "open"
+    },
+    {
+      "symbol": "FLOKIUSDT",
+      "entry": 0.00011077,
+      "tp": 0.00011440066666666667,
+      "sl": 0.00010895466666666667,
+      "created_at": "2025-08-23 03:04:36 UTC",
+      "last_sent_at": "2025-08-23 03:04:36 UTC",
+      "status": "open"
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "entry": 0.240619,
+      "tp": 0.24795206666666667,
+      "sl": 0.23695246666666667,
+      "created_at": "2025-08-23 03:04:36 UTC",
+      "last_sent_at": "2025-08-23 03:04:36 UTC",
+      "status": "open"
+    },
+    {
+      "symbol": "BTCUSDT",
+      "entry": 116834.0,
+      "tp": 118136.53333333334,
+      "sl": 116182.73333333334,
+      "created_at": "2025-08-23 03:04:37 UTC",
+      "last_sent_at": "2025-08-23 03:04:37 UTC",
+      "status": "open"
+    }
+  ],
+  "closed": []
+}
